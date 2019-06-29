@@ -1,2 +1,1 @@
-# Hello-world-
-my first repository
+This file is designed to learn HTML5 and CSS3.
