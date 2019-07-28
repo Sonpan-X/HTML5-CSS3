@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+   <script>
+    (function(){
+        var canvas=document.getElementById("canvas"),
+            ctx=canvas.getContext('2d'),
+            cx = canvas.width,
+            cy = canvas.height,
+            rubberWidth=30,
+            rubberHeight=30,
+            rubberLineWidth=1,
+            lastPos={x:0,y:0};
+
+            // 网格线
+         function drawGrid(color,stepx,stepy){
+             ctx.lineWidth=0.5;
+             ctx.strokeStyle=color;
+
+             for(let i=stepx+0.5;i<cx;i+=stepx){
+                 ctx.beginPath();
+                 ctx.moveTo(i,0);
+                 ctx.lineTo(i,cy);
+                 ctx.stroke();
+             }
+
+             for(let i=stepy+0.5;i<cy;i+=stepy){
+                 ctx.beginPath();
+                 ctx.moveTo(0,i);
+                 ctx.lineTo(cx,i);
+                 ctx.stroke();
+             }
+         }   
+    
+        //  获取坐标
+         function windowToCanvas(x,y){
+             var obox=canvas.getBoundingClientRect();
+             return {
+                 x:x-obox.left*(cx/obox.width),
+                 y:y-obox.top*(cy/obox.height)
+             }
+         };
+
+        //  设置要擦出的上一次的位置
+        function setLastClip(){
+            ctx.beginPath();
+            ctx.rect(lastPos.x-rubberWidth/2-rubberLineWidth,
+                     lastPos.y-rubberHeight/2-rubberLineWidth,
+                     rubberWidth+2*rubberLineWidth,
+                     rubberHeight+2*rubberLineWidth);
+            ctx.clip();//限定要擦除的区域
+            
+        }
+
+        // clip和填充clip的动作，必须再同一save，restore中
+        function clearLast(){
+            ctx.save();
+            setLastClip();
+            ctx.clearRect(0,0,cx,cy);
+            ctx.fillStyle='hsl(0,100%,70%)';
+            drawGrid('red',10,10);
+            ctx.restore();
+        }
+
+        // 当前位置的橡皮檫
+        function drawRubber(pos){
+            ctx.save();
+            ctx.fillStyle='#fff';
+            ctx.strokeStyle='red';
+            ctx.lineWidth=rubberLineWidth;
+            ctx.lineJoin='round';
+            ctx.beginPath();
+            ctx.rect(pos.x-rubberWidth/2,pos.y-rubberHeight/2,rubberWidth,rubberHeight);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+
+
+        canvas.onmousedown=function(e){
+            e.preventDefault();
+            lastPos = windowToCanvas(e.clientX,e.clientY);
+
+            canvas.onmousemove=function(e){
+                e.preventDefault();
+                var pos=windowToCanvas(e.clientX,e.clientY);
+                clearLast();
+                drawRubber(pos);
+                lastPos.x=pos.x;
+                lastPos.y=pos.y;
+            };
+
+            canvas.onmouseup=function(e){
+                e.preventDefault();
+                clearLast();
+
+                canvas.onmousemove=null;
+                canvas.onmouseup=null;
+            };
+        };
+
+        ctx.fillStyle='hsla(30,100%,70%,1)';
+        ctx.fillRect(0,0,cx,cy);
+    })()
+   </script>
+</body>
+</html>

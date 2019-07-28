@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>canvas-饼图</title>
+
+    <script>
+    function d2a(n){
+            return n*Math.PI/180;
+        }
+     window.onload=function(){
+         let Oc=document.getElementById("c5");
+         let gd= Oc.getContext("2d");
+
+         let cx=400,cy=300,r=200;
+         let datas=[
+             {data:300,name:"男:300",color:'red'},
+             {data:200,name:"女:200",color:'skyblue'},
+             {data:20,name:"其他:20",color:'lightgreen'}
+         ];
+
+         function pie(startAng,endAng,color,belong){
+             let x=cx+Math.cos(d2a(startAng))*r;
+             let y=cy+Math.sin(d2a(startAng))*r;
+             let ex=((cx + Math.cos(d2a((endAng-startAng)/2+startAng))*r)+cx)/2;
+             let ey=((cy + Math.sin(d2a((endAng-startAng)/2+startAng))*r)+cy)/2;
+            
+             gd.beginPath();
+             
+             gd.moveTo(cx,cy);
+             gd.lineTo(x,y);
+
+             gd.arc(cx,cy,r,d2a(startAng),d2a(endAng),false);
+             gd.closePath();
+             gd.fillStyle=color;
+             gd.fill();
+             gd.font="宋体 40px";
+             gd.fillStyle="black";
+             gd.fillText(belong,ex,ey);
+         }
+        
+     let sum=0;
+      datas.forEach(data=>{
+        sum+=data.data;
+      });
+
+      let now=0;
+      datas.forEach(data=>{
+        let ang=360*data.data/sum;
+
+        pie(now, now+ang, data.color,data.name);
+
+        now+=ang;
+        })
+     }
+    </script>
+</head>
+<body>
+    <canvas id="c5" width="800" height="800"></canvas>
+</body>
+</html>

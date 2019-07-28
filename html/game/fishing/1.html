@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+       body {background: #000;text-align: center;}
+       #c1{background: url(img/game_bg_2_hd.jpg);}
+    </style>
+    <script src="js/jquery.js" charset="utf-8"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/Spirit.js"></script>
+    <script src="js/Fish.js"></script>
+    <script src="js/Cannon.js"></script>
+    <script src="js/Bullet.js"></script>
+    <script src="js/Button.js"></script>
+    <script>
+      window.onload = async function(){
+        let oc = $("#c1")[0];
+        let W = oc.width,Y= oc.height;
+        let gd =  oc.getContext("2d");
+        
+        try{
+        
+            let imgs = await loadResources();
+
+        }catch(e){
+            alert('加载失败，请刷新重试');
+        }
+         
+        // 炮台
+        let data_bar = __g_resource['bottom'].bottom_bar;
+        let bottom_bar = new Spirit({
+            img: data_bar.img,
+            w: data_bar.frame.w,
+            h:data_bar.frame.h,
+            sx:data_bar.frame.x,
+            sy:data_bar.frame.y,
+            x:400,
+            y:566
+        });
+        
+        // 炮
+        let cannon = new Cannon(1);
+        cannon.x =  442;
+        cannon.y =  572;
+       
+        oc.onmousemove = function(ev){
+            let a =  ev.offsetX - cannon.x;
+            let b= ev.offsetY - cannon.y;
+
+
+            cannon.rotation = Math.atan2(b,a)*180/Math.PI + 90;  
+        };
+        
+        // 炮弹
+        let bullets = [];
+        oc.onclick = function(){
+            let bullet = new Bullet(cannon.type);
+            
+            bullet.x = cannon.x;
+            bullet.y = cannon.y;
+             
+            bullet.rotation =  cannon.rotation;
+            
+            bullets.push(bullet);
+        }
+        // 换炮按钮
+        let btnMinus = new Button(__g_resource['bottom'].cannon_minus,__g_resource['bottom'].cannon_minus_down);
+        let btnPlus = new Button(__g_resource['bottom'].cannon_plus,__g_resource['bottom'].cannon_plus_down);
+
+        btnMinus.x = 442 - 50;
+        btnMinus.y = 580;
+
+        btnPlus.x = 442 + 50;
+        btnPlus.y = 580;
+
+        oc.onmousedown = function(ev){
+            let minus = false;
+            let plus = false;
+            
+            if(btnMinus.checkDown(ev.offsetX,ev.offsetY)){
+                minus = true;
+            }
+
+            if(btnPlus.checkDown(ev.offsetX,ev.offsetY)){
+                plus = true;
+            }
+
+            if(minus && cannon.type>1){
+                cannon.setType(cannon.type -1);
+            }
+
+            if(plus && cannon.type<7){
+                cannon.setType(cannon.type+1);
+            }
+        }
+        
+        let fishes = [];
+
+
+        oc.onmouseup = function (ev){
+            btnMinus.checkUp(ev.offsetX,ev.offsetY);
+            btnPlus.checkUp(ev.offsetX,ev.offsetY);
+        }
+        requestAnimationFrame(next);
+        function next(){
+          gd.clearRect(0,0,oc.width,oc.height);
+          
+          bullets.forEach(bullet => bullet.move());
+
+          bottom_bar.draw(gd);
+          cannon.draw(gd);
+          bullets.forEach(bullet=>bullet.draw(gd));
+          btnMinus.draw(gd);
+          btnPlus.draw(gd);
+    
+          requestAnimationFrame(next);
+        }
+      }
+    
+    </script>
+</head>
+<body>
+    <canvas id="c1" width="800" height="600"></canvas>
+</body>
+</html>

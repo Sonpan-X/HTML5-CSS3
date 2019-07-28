@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body{
+            background: #eee;
+        }
+        #canvas{
+            background: #fff;
+            cursor: pointer;
+            margin-left: 10px;
+            margin-top: 10px;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+            -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+            -moz-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+        }
+        #controls{
+            position: absolute;
+            left: 25px;
+            top: 25px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1000" height="600"></canvas>
+    <div id="controls">
+        字体：
+        <select id="fontStyleSelect">
+            <option value="palatino">palatino</option>
+            <option value="lucida">lucida</option>
+            <option value="fantasy">fantasy</option>
+            <option value="copperplate">copperplate</option>
+            <option value="tahoma" selected>tahoma</option>
+            <option value="verdana">verdana</option>
+            <option value="impact">impact</option>
+            <option value="century">century</option>
+        </select>
+        字体大小：
+        <select id="fontSizeSelect">
+            <option value="20px" selected>20px</option>
+            <option value="30px">30px</option>
+            <option value="40px">40px</option>
+            <option value="50px">50px</option>
+            <option value="60px">60px</option>
+        </select>
+        字体填充颜色：
+        <select id="fillStyleSelect">
+            <option value="red">red</option>
+            <option value="green">green</option>
+            <option value="blue">blue</option>
+            <option value="orange">orange</option>
+            <option value="cornflowerblue" selected>cornflowerblue</option>
+            <option value="goldenrod">goldenrod</option>
+            <option value="navy">navy</option>
+            <option value="purple">purple</option>
+        </select>
+        字体描边颜色：
+        <select id="strokeStyleSelect">
+            <option value="red">red</option>
+            <option value="green">green</option>
+            <option value="blue">blue</option>
+            <option value="orange">orange</option>
+            <option value="cornflowerblue" selected>cornflowerblue</option>
+            <option value="goldenrod">goldenrod</option>
+            <option value="navy">navy</option>
+            <option value="purple">purple</option>
+        </select>
+    </div>
+    <!-- 光标函数类 -->
+    <script>
+        class TextCursor {
+            constructor(width, fillStyle) {
+                this.width = width || 2;
+                this.fillStyle = fillStyle || 'rgba(0,0,0,0.5)';
+                this.left = 0;
+                this.top = 0;
+            }
+            //   字高
+            getHeight(context) {
+        
+                let h = context.measureText('M').width;
+                return h + h / 6;
+            }
+
+            // 创建光标所在路径
+            createPath(context) {
+                context.beginPath();
+                context.rect(this.left, this.top, this.width, this.getHeight(context));
+            }
+            // 绘制光标 left，bottom代表鼠标点下的一点在canvas中的坐标
+            draw(context, left, bottom) {
+                context.save();
+
+                this.left = left;
+                this.top = bottom - this.getHeight(context);
+                this.createPath(context);
+
+                context.fillStyle = this.fillStyle;
+                context.fill();
+
+                context.restore();
+            }
+            // 擦除光标：擦除的是光标所在的那一块像素
+            erase(context, imageData) {
+                context.putImageData(imageData, 0, 0, this.left, this.top, this.width, this.getHeight(context));
+            }
+
+        }
+    </script>
+    <!-- 插入文本行对象 -->
+    <script>
+        class TextLine {
+            constructor(x, y) {
+                this.left = x;
+                this.bottom = y;
+                this.text = '';
+                this.caret = 0;//插入字符位置数
+            }
+
+            // 得到字符高
+            getHeight(context) {
+                var h = context.measureText('M').width;
+                return h + h / 6;
+            }
+
+            getWidth(context) {
+                return context.measureText(this.text).width;
+            }
+
+            insert(text) {
+                // 得到新的字符串
+                this.text = this.text.substr(0, this.caret) + text + this.text.substr(this.caret);
+                // 更新字符串位数
+                this.caret += text.length;
+            }
+
+            //删除字符串
+            removeCharacterBeforeCaret() {
+                if (this.caret === 0) {
+                    return;
+                }
+                this.text = this.text.substr(0, this.caret - 1) + this.text.substr(this.caret);
+                //  更新字符串的长度
+                this.caret--;
+            }
+            //重绘更新后的文本
+            draw(context) {
+                context.save();
+
+                context.textAlign = 'start';
+                context.textAlign = 'bottom'
+                
+                // console.log(context.strokeText);
+                context.strokeText(this.text, this.left, this.bottom);
+                context.fillText(this.text, this.left, this.bottom);
+
+                context.restore();
+            }
+            // 擦除文本：注意根据canvas规范要想擦书的文本，必须替换掉整个canvas
+            erase(context, imageData) {
+                context.putImageData(imageData, 0, 0);
+            }
+        }
+
+    </script>
+    <script>
+        (function () {
+            let oc = document.getElementById("canvas");
+            let context = oc.getContext("2d");
+
+            let fontSelect = document.getElementById('fontStyleSelect');
+            let sizeSelect = document.getElementById('fontSizeSelect');
+            let strokeStyleSelect = document.getElementById('strokeStyleSelect');
+            let fillStyleSelect = document.getElementById('fillStyleSelect');
+
+            let cursor = new TextCursor();
+            let line;
+            let blinkingInterval;
+            let drawingSurfaceImageData;
+
+            let blink_time = 1000;
+            let blink_off = 300;
+
+            //鼠标样式       
+            cursor.fillStyle = fillStyleSelect.value;
+            //  字体样式
+            context.fillStyle = fillStyleSelect.value;
+            context.strokeStyle = strokeStyleSelect.value;
+            context.lineWidth = 2;
+
+            setFont();
+            drawBackground();
+            saveDrawingSurface();
+
+            // canvas点击事件
+            canvas.onmousedown = function (e) {
+                let loc = windowToCanvas(e.clientX, e.clientY);
+
+                moveCursor(loc.x, loc.y);
+                // 每次点击时新建一个文本行对象
+                line = new TextLine(loc.x, loc.y);
+            }
+
+            //键盘输入事件
+            //onkeypress只有输入键可触发，晚于onkeydown触发
+            document.onkeypress = function (e) {
+                let key = String.fromCharCode(e.which);
+                console.log("keypress");
+                context.save();
+                line.erase(context, drawingSurfaceImageData);
+
+                line.insert(key);
+
+                moveCursor(line.left + line.getWidth(context), line.bottom);
+
+                line.draw(context);
+                context.restore();
+            }
+
+            document.onkeydown = function (e) {
+
+                if (e.keyCode === 8 || e.keyCode === 13) {
+                    e.preventDefault();
+                }
+
+                if (e.keyCode === 8) {
+                    context.save();
+                    console.log('keydown');
+
+                    line.erase(context, drawingSurfaceImageData);
+
+                    line.removeCharacterBeforeCaret();
+
+                    moveCursor(line.left + line.getWidth(context), line.bottom);
+
+                    line.draw(context);
+
+                    context.restore();
+                }
+            }
+
+            function moveCursor(x, y) {
+                cursor.erase(context, drawingSurfaceImageData);
+
+                saveDrawingSurface();
+                cursor.draw(context, x, y);
+                blinkCursor(x, y);
+
+            }
+
+            function blinkCursor(x, y) {
+                clearInterval(blinkingInterval);
+                blinkingInterval = setInterval(function () {
+                    cursor.erase(context, drawingSurfaceImageData);
+                    setTimeout(function () {
+                        if (cursor.left == x && cursor.top + cursor.getHeight(context) == y) {
+                            cursor.draw(context, x, y);
+                        }
+                    }, blink_off);
+                }, blink_time);
+            }
+
+            //控件事件
+            fontSelect.onchange = setFont;
+            sizeSelect.onchange = setFont;
+            strokeStyleSelect.onchange = function () {
+                context.strokeStyle = strokeStyleSelect.value;
+            }
+            fillStyleSelect.onchange = function () {
+                cursor.fillStyle = fillStyleSelect.value;
+                context.fillStyle = fillStyleSelect.value;
+            }
+            // 设置字体
+            function setFont() {
+                context.font = sizeSelect.value + ' ' + fontSelect.value;
+            }
+
+            //绘制背景
+            function drawBackground() {
+                context.save();
+
+                context.shadowColor = undefined;
+                context.shadowOffsetX = 0;
+                context.shadowOffsetY = 0;
+                context.shadowBlur = 0;
+
+                var stop_y = 20;
+                var left_margin = stop_y*3;
+                var top_margin = stop_y*4;
+                var i =  canvas.height;
+                context.strokeStyle = 'lightgray';
+                context.lineWidth = 0.5;
+
+                while(i>top_margin){
+                    context.beginPath();
+                    context.moveTo(left_margin,i);
+                    context.lineTo(canvas.width,i);
+                    context.stroke();
+                    i-=stop_y;
+                }
+
+                context.beginPath();
+                context.moveTo(left_margin,top_margin);
+                context.lineTo(left_margin,canvas.height);
+                context.stroke();
+
+                context.restore();
+            }
+
+            // 保存画布数据
+            function saveDrawingSurface(){
+                drawingSurfaceImageData = context.getImageData(0,0,canvas.width,canvas.height);
+            }
+
+            //转换坐标
+            function windowToCanvas(x,y){
+                var bbox = canvas.getBoundingClientRect();
+                return{
+                    x:x- bbox.left*(canvas.width/bbox.width),
+                    y:y- bbox.top*(canvas.height/bbox.height)
+                };
+            };
+        })()
+    </script>
+</body>
+
+</html>

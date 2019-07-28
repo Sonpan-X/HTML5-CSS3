@@ -1,0 +1,83 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <script>
+     (function(){
+         var canvas = document.getElementById("canvas");
+         var Oc=canvas.getContext("2d");
+      
+        //  渐变
+        var lg = Oc.createLinearGradient(0,0,0,300);
+        lg.addColorStop(0,'gray');
+        lg.addColorStop(1,'#99de9a');
+        Oc.fillStyle=lg;
+        Oc.fillRect(0,0,400,300);
+        
+        // 径向渐变
+        var gl2 = Oc.createLinearGradient(400,0,0,400);
+        gl2.addColorStop(0.1,'gray');
+        gl2.addColorStop(0.5,'red');
+        gl2.addColorStop(1,'#99d9ea');
+        Oc.fillStyle=gl2;
+        Oc.fillRect(0,300,400,800); 
+
+
+        Oc.fillStyle='red';
+        Oc.fillRect(10,10,50,50);
+
+        
+        Oc.translate(60,60);//原点平移
+        Oc.fillRect(0,0,50,50);
+    
+        Oc.translate(60,60);//原点平移
+        Oc.scale(1.5,1.2);//放大
+        Oc.fillRect(0,0,50,50);
+       
+        Oc.translate(60,60);
+        Oc.rotate(Math.PI/20);//旋转
+        Oc.fillRect(0,0,50,50);
+
+        Oc.translate(100,0);
+        Oc.rotate(-Math.PI/20);
+        Oc.fillRect(0,0,50,50);
+        // Oc.globalCompositeOperation='xor';
+
+        Oc.fillStyle='blue';
+        Oc.translate(20,20);
+        Oc.fillRect(0,0,50,50);
+
+
+        Oc.translate(20,50);
+        Oc.shadowOffsetX=10;
+        Oc.shadowOffsetY=10;
+        Oc.shadowColor='green';
+        Oc.shadowBlur=10;
+        Oc.fillRect(0,0,50,50);
+
+        Oc.translate(100,100);
+        var img=new Image();
+        img.src='../../images/1.jpeg';
+        img.onload=function(){
+            Oc.drawImage(img,0,0,100,100);
+            Oc.translate(0,-200);
+            //(图像,源图像x,源图像y,源图像宽,源图像高,目的图x,目的图y,缩放宽,缩放高)
+            Oc.drawImage(img,300,300,200,200,0,0,100,100);
+           
+            Oc.translate(50,150);
+            Oc.beginPath();
+            Oc.arc(0,0,40,0,360*Math.PI/180,true);
+            Oc.fill();
+            Oc.clip();
+            Oc.drawImage(img,-40,-40,80,80);
+        }
+
+     })()
+    </script>
+</body>
+</html>
