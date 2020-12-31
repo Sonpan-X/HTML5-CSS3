@@ -22,19 +22,19 @@ var client = function () {
   };
 
   var system = {
-   win:false,
-   mac:false,
-   xll:false,
+    win:false,
+    mac:false,
+    xll:false,
 
-   iphone:false,
-   ipod:false,
-   ipad:false,
-   ios:false,
-   andriod:false,
-   winMobile:false,
+    iphone:false,
+    ipod:false,
+    ipad:false,
+    ios:false,
+    andriod:false,
+    winMobile:false,
 
-   wii:false,
-   ps:false,
+    wii:false,
+    ps:false,
   };
 
   var ua = navigator.userAgent;

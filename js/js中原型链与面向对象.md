@@ -2,6 +2,12 @@
 
 
 ### 构建对象的方法
+    怎么理解js中的原型链?
+    > 每个构造函数都有一个原型对象
+    > 每个原型对象都包含一个指向构造函数的指针
+    > 每个实例都包含一个指向原型对象的指针
+    > 查找方式是一层层向上查找直至顶层Object.prototype
+
 #### 1.工厂模式
 ```js
   function createObject(name,sex,age,job){
@@ -31,11 +37,6 @@
 
  var person1 = new Person('jack',20,'Software Engineer');
 ```
-*new 操作符做了以下几个事情*
-* 1).创建一个新对象
-* 2).将构造函数的作用域指向新对象，即把this指向新对象
-* 3).执行构造函数中的代码
-* 4).返回新对象
 *缺点：声明的方法无法复用，造成内存浪费*
 
 #### 3.原型模式
@@ -55,7 +56,7 @@ var person  = new Person();
 * 3.in操作符
 * 4.hasPrototypeProperty()
 
-*缺点：原型模式的最大问题是共享问题*
+*缺点：原型模式的最大问题是共享问题，原型链的属性改变，将影响所有的实例*
 
 #### 4.组合模式
 ```js
@@ -73,7 +74,7 @@ var person  = new Person();
  }
 ```
 
-*实例属性都是在构造函数中定义，目前使用最广泛的方式*
+*实例属性都是在构造函数中定义，方法在原型链上继承，目前使用最广泛的方式*
 
 #### 5.动态原型模式
 ```js
@@ -120,7 +121,16 @@ var person1 = new Person('jack',18,'Software Engineer');
 ```
 *这个模式除了sayName方法外没有其他方法可以访问name属性*
 
-### 对象继承
+
+
+
+### 二、对象继承
+    *如何实现继承?*
+    原型链继承
+    借用构造函数(call,apply)
+    组合继承(原型链＋构造函数)
+    原型式继承
+    寄生式组合式继承
 
 #### 1.原型链继承
 *原型链的继承是通过改写子类SubType的prototype实现的，将创建的父类SurperType()的实例，并将实例赋给了子类的SubType的prototype。子类的所有方法在改写prototype之后添加。*
@@ -171,7 +181,7 @@ console.log(instance2.color,instance2.name)
 *问题：仅用构造函数无法解决函数复用的问题*
 
 
-#### 4.组合继承（伪经典继承）
+#### 3.组合继承（伪经典继承）
 *指将原型链和构造函数组合起来的继承方式。构造函数实现属性继承，原型链实现方法继承。*
 ```js
 function SurperType(name){
@@ -198,7 +208,7 @@ instance.sayAge();
 *这种方法综合了两种模式的优点，缺点是调用了两次SurperType构造函数*
 
 
-#### 5.原型式继承
+#### 4.原型式继承
 *思路基于已有的对象原型创建新的对象，不用创建自定义对象。*
 ```js
   function SurperType(o){
@@ -209,7 +219,7 @@ instance.sayAge();
 ```
 
 
-#### 6.寄生式继承
+#### 5.寄生式继承
 *思路：和工厂模式思路一样，创建一个封装继承过程的函数。与原型式继承相关紧密相关。*
 ```js
 function object(o){
@@ -227,7 +237,7 @@ function createAnother(origin){
 ```
 *object()函数不是必须的，任何能够返回对象的函数都适用于此模式*
 
-#### 7.寄生组合式继承
+#### 6.寄生组合式继承
 *思路：不必为指定子类的原型而调用父类的构造函数，复制一个弗雷德额副本。*
 ```js
  function inheritPrototype(subType,surperType){
@@ -238,6 +248,22 @@ function createAnother(origin){
 ```
 
 
-### 在jQuery中怎么实现原型链继承的
+### 在jQuery中怎么实现原型链继承的?
 
 
+
+### *new 操作符做了以下几个事情*
+* 1).创建一个新的空对象
+* 2).将构造函数的作用域指向新对象，即把this指向新对象call()
+* 3).将空对象的__proto指向构造函数的prototype
+* 4).返回新对象
+
+```js
+  function newFun(obj){
+   let o = Object.create({})
+       obj.call(o)
+       o.__proto__ = obj.prototype
+   
+   return o
+  }
+```
